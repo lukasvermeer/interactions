@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+
+    <title>Experiment Interactions Checker</title>
+    <link rel="stylesheet" href="bootstrap/css/bootstrap.min.css">
+
+    <script type="text/javascript" src="vue/vue.min.js"></script>
+    <script type="text/javascript" src="lib/statistics-distributions.js"></script>
+
+    </head>
+    <body>
+      <div class="content-wrapper" id="app-tester">
+        <div class="container">
+          <div class="row">
+            <div class="col-md-offset-3 col-md-6">
+              <div class="lead">
+                <h2>Experiment Interactions Checker</h2>
+              </div>
+
+              <div class="alert alert-danger">
+                <em>Warning.</em> THIS DOES NOT WORK YET!
+              </div>
+
+              <p>TODO: write intro</p>
+              <p>TODO: fix stats</p>
+
+              <form>
+                <div v-for="(item, index) in input.table">
+                  <div class="form-group col-xs-5">
+                    <label for="obs-{{ index }}">Visitors in {{ String.fromCharCode(65 + index) }}A</label>
+                    <input v-model="item[0]" type="number" pattern="\d*" min="0" class="form-control" id="obs-{{ index }}" placeholder="Observed sample size"/> 
+                  </div>
+                  <div class="form-group col-xs-5">
+                    <label for="exp-{{ index }}">Visitors in {{ String.fromCharCode(65 + index) }}B</label>
+                    <input v-model="item[1]" type="number" step="any" min="0" max="1" pattern="\d*" class="form-control" id="exp-{{ index }}" placeholder="Observed sample size"/> 
+                  </div>
+                </div>
+              </form>
+              <br />
+            </div>
+            <div class="col-md-offset-3 col-md-6">
+
+              <div class="alert alert-warning" v-if="flag_interact">
+                <em>Warning.</em> Possible interaction detected with <var>{{ display_p }}</var>.
+                The observed sample sizes in each group does not match the expected proportion of the total sample size.
+                <strong>Comparative statistics may be invalid as a result.</strong>
+              </div>
+
+              <div class="alert alert-success text-center" v-if="!flag_interact">
+                No indication of interactions with <var>{{ display_p }}</var>.
+              </div>
+
+              <footer class="text-center">
+                <small>Designed with <i class="glyphicon glyphicon-heart"></i> by <a href="www.lukasvermeer.nl" target="_blank">Lukas Vermeer</a> for experimenters everywhere</small>
+              </footer>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <script type="text/javascript">
+      tester = new Vue({
+        el: '#app-tester',
+        data: {
+          input: {
+            table: [["",""], ["",""]],
+          },
+        },
+        methods: {
+          // Checking for interactions using chi-square
+          chisquare: function(observed, expected) {
+            // Check if input contains only numbers, and two arrays of equal length
+            if (observed.some((x) => !Number.isFinite(x))) { return NaN; }
+            if (expected.some((x) => !Number.isFinite(x))) { return NaN; }
+            if (expected.length !== observed.length) { return NaN; }
+
+            // Degrees of freedom is variations - 1
+            const df = observed.length - 1;
+            // Total sample size is sum of all variations
+
+            // TODO: from here it's different from the SRM base I used.
+            // Expected for each cell is mean_row * mean_col / grand_mean
+            // chisq below should be for all cells
+            const sampleSize = observed.reduce((a, v) => a + v);
+            // Scale expected count per variation to match observed sample
+            const expectedScaled = expected.map((e) => Math.round((sampleSize * e) / 100));
+            // Chi-square is sum of squares of observed - expected over expected for each variation
+            const chisq = expectedScaled.reduce((a, e, i) => a + (((observed[i] - e) ** 2) / e), 0);
+
+            return chisqrprob(df, chisq);
+          },
+        },
+        computed: {
+          interact_p: function(v) {
+            let scale_props = 1;
+            let o = this.input.table.map((v) => parseInt(v[0]));
+            let e = this.input.table.map((v) => parseInt(v[1]));
+            let p = this.chisquare(o,e);
+            return p;
+          },
+          flag_interact: function() {
+            return this.interact_p < 0.01;
+          },
+          display_p: function() {
+            const precision = 4;
+            const smallest_display = 1/(10**precision);
+            if (this.interact_p < smallest_display) {
+              return "p < " + smallest_display;
+            } else {
+              return "p = " + this.interact_p.toFixed(4);
+            }
+          }
+        }
+      });
+    </script>
+    </body>
+</html>
