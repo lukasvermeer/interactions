@@ -23,12 +23,7 @@
                 <h2>Experiment Interactions Checker</h2>
               </div>
 
-              <div class="alert alert-danger">
-                <em>Warning.</em> THIS DOES NOT WORK YET!
-              </div>
-
               <p>TODO: write intro</p>
-              <p>TODO: fix stats</p>
 
               <form>
                 <div v-for="(item, index) in input.table">
@@ -73,37 +68,44 @@
         methods: {
           // Checking for interactions using chi-square
           chisquare: function(observed, expected) {
-            // Check if input contains only numbers, and two arrays of equal length
-            if (observed.some((x) => !Number.isFinite(x))) { return NaN; }
-            if (expected.some((x) => !Number.isFinite(x))) { return NaN; }
+            // Check if input contains only numbers, and two matrices of equal dimensions
+            if (observed.some((x) => (x.some((y) => !Number.isFinite(y))))) { return NaN; }
+            if (expected.some((x) => (x.some((y) => !Number.isFinite(y))))) { return NaN; }
             if (expected.length !== observed.length) { return NaN; }
+            if (expected.some((x,i) => x.length !== observed[i].length)) { return NaN; }
 
             // Degrees of freedom is variations - 1
             const df = observed.length - 1;
-            // Total sample size is sum of all variations
 
-            // TODO: from here it's different from the SRM base I used.
-            // Expected for each cell is mean_row * mean_col / grand_mean
-            // chisq below should be for all cells
-            const sampleSize = observed.reduce((a, v) => a + v);
-            // Scale expected count per variation to match observed sample
-            const expectedScaled = expected.map((e) => Math.round((sampleSize * e) / 100));
-            // Chi-square is sum of squares of observed - expected over expected for each variation
-            const chisq = expectedScaled.reduce((a, e, i) => a + (((observed[i] - e) ** 2) / e), 0);
+            // Chi-square is sum of squares of observed - expected over expected for each cell
+            const chisq = expected.reduce((a, e, i) => a + e.reduce((b, f, j) => (b + ((observed[i][j] - f) ** 2) / f), 0), 0);
 
             return chisqrprob(df, chisq);
           },
         },
         computed: {
+          expected_under_null: function() {
+            let row_sums = this.table_int.map((v) => v.reduce((a, e) => a + e, 0));
+            let col_sums = this.table_int.reduce((a, e) => e.map((v, i) => (a[i]||0) + v), []);
+
+            let row_means = row_sums.map(v => v / this.table_int[0].length);
+            let col_means = col_sums.map(v => v / this.table_int.length);
+            let grand_mean = row_means.reduce((a,v) => a + v, 0) / row_means.length;
+
+            // Expected for each cell is mean_row * mean_col / grand_mean
+            let expected = row_means.map((r) => col_means.map((c) => r * c / grand_mean));
+
+            return expected;
+          },
+          table_int: function() {
+            return this.input.table.map((v) => (v.map((w) => parseInt(w))));
+          },
           interact_p: function(v) {
-            let scale_props = 1;
-            let o = this.input.table.map((v) => parseInt(v[0]));
-            let e = this.input.table.map((v) => parseInt(v[1]));
-            let p = this.chisquare(o,e);
+            let p = this.chisquare(this.table_int, this.expected_under_null);
             return p;
           },
           flag_interact: function() {
-            return this.interact_p < 0.01;
+            return this.interact_p < 0.05;
           },
           display_p: function() {
             const precision = 4;
