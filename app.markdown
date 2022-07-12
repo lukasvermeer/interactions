@@ -3,6 +3,20 @@ layout: default
 title: Run the test
 nav_order: 2
 ---
+
+# Run the test
+{: .no_toc }
+
+A simple web app that helps identify interactions between tests.
+{: .fs-6 .fw-300 }
+
+To test for interactions between two experiments `1` and `2`, we will need
+counts for each combination of variations of the two tests. The first field
+below labeled `1A+2A` should contain the count for visitors who were exposed
+to the first variation (`A`) of experiment `1` and also to the first variation
+(`A`) of experiment `2`. Visitors who were exposed to only one of the two tests
+are not included in this analysis.
+
 <script type="text/javascript" src="{{site.baseurl}}/assets/js/vue/vue.min.js"></script>
 <script type="text/javascript" src="{{site.baseurl}}/assets/js/lib/statistics-distributions.js"></script>
 
@@ -15,7 +29,7 @@ nav_order: 2
           <div v-for="(item, index) in input.table">
             <div v-for="(cell, cindex) in item">
               <div class="form-group col-xs-5">
-                <label for="obs-{{ index }}{{ cindex }}">Conversions in {{ String.fromCharCode(65 + index) }}+{{ String.fromCharCode(65 + cindex) }}</label>
+                <label for="obs-{{ index }}{{ cindex }}">Conversions in 1{{ String.fromCharCode(65 + index) }}+2{{ String.fromCharCode(65 + cindex) }}</label>
                 <input v-model="item[cindex]" type="number" pattern="\d*" min="0" class="form-control" id="obs-{{ index }}{{ cindex }}" placeholder="Observed sample size"/> 
               </div>
             </div>
