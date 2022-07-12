@@ -11,8 +11,7 @@ permalink: /
 A simple web app that helps identify interactions between tests.
 {: .fs-6 .fw-300 }
 
-[Test for interactions](webapp/index.html){: .btn .btn-primary .fs-5 .mb-4 .mb-md-0 .mr-2 } [Read the instructions]({{ site.baseurl }}{% link docs/howto.md %}){: .btn .fs-5 .mb-4 .mb-md-0 }
-
+[Test for interactions]({{ site.baseurl }}{% link app.markdown %}){: .btn .btn-primary .fs-5 .mb-4 .mb-md-0 .mr-2 } [Read the instructions]({{ site.baseurl }}{% link docs/howto.md %}){: .btn .fs-5 .mb-4 .mb-md-0 }
 
 ---
 

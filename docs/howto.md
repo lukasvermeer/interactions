@@ -1,7 +1,7 @@
 ---
 layout: default
-title: How To
-nav_order: 2
+title: How to DIY
+nav_order: 5
 ---
 
 # How to
